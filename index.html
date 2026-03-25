@@ -33,14 +33,6 @@
             box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
         }
 
-        .terminal-text {
-            text-shadow: 0 0 5px #00ffff;
-        }
-
-        .chapter-transition {
-            transition: all 0.5s ease-in-out;
-        }
-
         .btn-sci-fi {
             background: rgba(0, 255, 255, 0.15);
             border: 1px solid #00ffff;
@@ -64,13 +56,11 @@
 <body class="h-screen flex items-center justify-center p-4">
     <div class="crt-overlay"></div>
 
-    <!-- Main Game Container -->
-    <div id="game-container" class="w-full max-w-2xl h-[600px] glass-panel rounded-lg p-8 flex flex-col relative overflow-hidden">
+    <div id="game-container" class="w-full max-w-2xl h-[600px] glass-panel rounded-lg p-8 flex flex-col relative overflow-hidden transition-transform duration-75">
         
-        <!-- Header Info -->
         <div class="flex justify-between items-center mb-6 border-b border-cyan-900 pb-4">
             <div>
-                <h1 class="text-cyan-400 font-bold text-xl tracking-widest">LAB_ESCAPE_V2.0</h1>
+                <h1 class="text-cyan-400 font-bold text-xl tracking-widest">LAB_ESCAPE_V2.1</h1>
                 <p id="chapter-title" class="text-xs text-cyan-600">Chapter 1: Power Restoration</p>
             </div>
             <div class="text-right">
@@ -79,12 +69,10 @@
             </div>
         </div>
 
-        <!-- Scene Content -->
         <div id="scene-display" class="flex-grow flex flex-col justify-center items-center text-center">
-            <!-- Content will be injected here -->
+            <!-- Scene content -->
         </div>
 
-        <!-- Input Area -->
         <div id="input-area" class="mt-6">
             <div class="flex gap-2">
                 <input type="text" id="answer-input" placeholder="ACCESS_CODE_REQUIRED..." 
@@ -94,14 +82,12 @@
             <p id="feedback" class="text-xs mt-2 h-4 text-red-500"></p>
         </div>
 
-        <!-- Footer Decorations -->
         <div class="mt-4 flex justify-between text-[10px] text-cyan-900 uppercase">
             <span>Core: Bio-Hazard Unit 7</span>
             <span>Security Level: Alpha</span>
         </div>
     </div>
 
-    <!-- Modals / Overlays -->
     <div id="intro-modal" class="fixed inset-0 bg-black z-[200] flex items-center justify-center p-6">
         <div class="max-w-md text-center">
             <div class="mb-6 text-cyan-400 animate-pulse">
@@ -110,8 +96,7 @@
             <h2 class="text-3xl font-bold text-cyan-400 mb-4 tracking-tighter">PROJECT: X-RECOVERY</h2>
             <p class="text-gray-400 mb-8 leading-relaxed">
                 정신을 차려보니 봉쇄된 지하 연구실입니다. <br>
-                비상 경보음이 울리고 있고, 산소 공급이 부족해지고 있습니다. <br>
-                시스템의 모듈을 하나씩 해결하여 탈출하십시오.
+                입력기에 한글/영문/숫자를 정확히 입력해 탈출하세요.
             </p>
             <button onclick="startGame()" class="btn-sci-fi px-10 py-3 rounded-full text-lg font-bold text-cyan-400">
                 SYSTEM START
@@ -124,7 +109,7 @@
             {
                 id: 1,
                 title: "Chapter 1: Power Restoration",
-                description: "메인 컴퓨터의 전원이 꺼져 있습니다. 배전반의 비밀번호를 입력하세요.<br><br><span class='text-yellow-500'>[힌트: 연구소 창립 기념일은 12월 24일입니다. (MMDD)]</span>",
+                description: "메인 컴퓨터의 전원이 꺼져 있습니다. 배전반의 비밀번호를 입력하세요.<br><br><span class='text-yellow-500'>[힌트: 연구소 창립 기념일은 12월 24일입니다. (1224)]</span>",
                 answer: "1224",
                 successMsg: "전원 복구 완료. 시스템 온라인.",
                 image: "🔌"
@@ -148,7 +133,7 @@
             {
                 id: 4,
                 title: "Chapter 4: Microscopic View",
-                description: "현미경으로 관찰된 바이러스의 모양이 숫자를 나타내고 있습니다.<br><br><div class='italic text-gray-500 underline'>'I look like a zero but I am the start of everything. I look like a circle.'</div>",
+                description: "수수께끼를 풀어 보안 코드를 입력하세요.<br><br><div class='italic text-gray-500 underline'>'나는 숫자 0처럼 생겼지만, 모든 숫자의 시작입니다.'</div>",
                 answer: "0",
                 successMsg: "바이러스 샘플 확인 완료.",
                 image: "🔬"
@@ -197,28 +182,32 @@
             document.getElementById('feedback').innerText = "";
         }
 
+        // 전각 문자를 반각으로 변환하는 함수
+        function toHalfWidth(str) {
+            return str.replace(/[！-～]/g, function(s) {
+                return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+            }).replace(/　/g, " ");
+        }
+
         function checkAnswer() {
-            const input = document.getElementById('answer-input').value.trim();
+            let input = document.getElementById('answer-input').value;
+            // 1. 공백 제거, 2. 전각->반각 변환, 3. 소문자 변환
+            input = toHalfWidth(input.trim()).toLowerCase();
+            
             const feedback = document.getElementById('feedback');
             const chapter = chapters[currentChapter];
+            const correctAnswer = chapter.answer.toLowerCase();
 
-            if (input.toLowerCase() === chapter.answer.toLowerCase()) {
-                feedback.classList.remove('text-red-500');
-                feedback.classList.add('text-green-500');
+            if (input === correctAnswer) {
+                feedback.className = "text-xs mt-2 h-4 text-green-500";
                 feedback.innerText = chapter.successMsg;
-                
-                setTimeout(() => {
-                    nextChapter();
-                }, 1500);
+                setTimeout(nextChapter, 1500);
             } else {
-                feedback.classList.remove('text-green-500');
-                feedback.classList.add('text-red-500');
+                feedback.className = "text-xs mt-2 h-4 text-red-500";
                 feedback.innerText = "ACCESS_DENIED: INVALID_CODE";
-                
-                // Shake effect
                 const container = document.getElementById('game-container');
-                container.classList.add('translate-x-1');
-                setTimeout(() => container.classList.remove('translate-x-1'), 100);
+                container.classList.add('translate-x-2');
+                setTimeout(() => container.classList.remove('translate-x-2'), 100);
             }
         }
 
@@ -236,25 +225,20 @@
             const totalTime = document.getElementById('timer').innerText;
             const display = document.getElementById('scene-display');
             document.getElementById('input-area').classList.add('hidden');
-            document.getElementById('chapter-title').innerText = "SYSTEM: COMPLETED";
-            document.getElementById('status-text').innerText = "SAFE_EVACUATED";
-            document.getElementById('status-text').classList.replace('text-green-500', 'text-cyan-400');
-
             display.innerHTML = `
                 <div class="text-cyan-400">
                     <i class="fas fa-check-circle text-7xl mb-4"></i>
                     <h2 class="text-3xl font-bold mb-2">탈출에 성공했습니다!</h2>
-                    <p class="text-gray-400 mb-6">당신은 모든 보안 모듈을 무력화하고 연구소를 빠져나왔습니다.</p>
+                    <p class="text-gray-400 mb-6">연구소를 무사히 빠져나왔습니다.</p>
                     <div class="bg-cyan-950/30 p-4 border border-cyan-700 rounded-lg">
-                        <p class="text-sm">소요 시간</p>
+                        <p class="text-sm">기록</p>
                         <p class="text-4xl font-black">${totalTime}</p>
                     </div>
-                    <button onclick="location.reload()" class="mt-8 text-xs underline opacity-50 hover:opacity-100 transition">RESTART SYSTEM</button>
+                    <button onclick="location.reload()" class="mt-8 text-xs underline opacity-50 hover:opacity-100 transition">다시 하기</button>
                 </div>
             `;
         }
 
-        // Handle Enter key
         document.getElementById('answer-input').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') checkAnswer();
         });
